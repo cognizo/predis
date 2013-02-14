@@ -28,6 +28,7 @@ class SessionHandler implements SessionHandlerInterface
 {
     protected $client;
     protected $ttl;
+    protected $prefix;
 
     /**
      * @param ClientInterface $client Fully initialized client instance.
@@ -37,6 +38,7 @@ class SessionHandler implements SessionHandlerInterface
     {
         $this->client = $client;
         $this->ttl = (int) (isset($options['gc_maxlifetime']) ? $options['gc_maxlifetime'] : ini_get('session.gc_maxlifetime'));
+        $this->prefix = (string) (isset($options['prefix']) ? $options['prefix'] : '');
     }
 
     /**
@@ -93,7 +95,7 @@ class SessionHandler implements SessionHandlerInterface
      */
     public function read($session_id)
     {
-        if ($data = $this->client->get($session_id)) {
+        if ($data = $this->client->get($this->prefix . $session_id)) {
             return $data;
         }
 
@@ -104,7 +106,7 @@ class SessionHandler implements SessionHandlerInterface
      */
     public function write($session_id, $session_data)
     {
-        $this->client->setex($session_id, $this->ttl, $session_data);
+        $this->client->setex($this->prefix . $session_id, $this->ttl, $session_data);
 
         return true;
     }
@@ -114,7 +116,7 @@ class SessionHandler implements SessionHandlerInterface
      */
     public function destroy($session_id)
     {
-        $this->client->del($session_id);
+        $this->client->del($this->prefix . $session_id);
 
         return true;
     }
